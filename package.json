@@ -12,6 +12,8 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
+    "deploy": "npm run build && wrangler deploy",
+    "typegen": "wrangler types",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc"
   },
