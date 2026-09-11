@@ -8,8 +8,9 @@ export default [
         route("news/:id", "routes/news.$id.tsx"),
         route("team", "routes/team.tsx"),
         route("schedules", "routes/schedules.tsx"),
-        route("*", "routes/not-found.tsx")
+        route("*", "routes/not-found.tsx"),
     ]),
+    route("api/webhook", "routes/api/webhook.tsx"),
     ...prefix("panel", [
         route("login", "routes/panel/login.tsx"),
         route("register", "routes/panel/register.tsx"),
@@ -19,6 +20,7 @@ export default [
             route("*", "routes/panel/not-found.tsx"),
             route("logout", "routes/panel/logout.tsx"),
             route("users", "routes/panel/users.tsx"),
+            route("schedules/users/list", "routes/panel/schedulesUsers.tsx"),
         ]),
     ]),
 ] satisfies RouteConfig;

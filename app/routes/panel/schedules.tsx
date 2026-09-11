@@ -1,18 +1,19 @@
 import TableSchedules from "~/components/schedules/TableSchedules";
 import type { Route } from "../+types/home";
-import { tokenContext } from "~/context";
+import { tokenContext, userContext } from "~/context";
 import { useLoaderData } from "react-router";
 
 export async function loader({ context }: Route.LoaderArgs) {
   const token = context.get(tokenContext);
-  return { token };
+  const user = context.get(userContext);
+  return { token, user };
 }
 
 export default function Schedules() {
-  const { token } = useLoaderData<typeof loader>();
+  const { token, user } = useLoaderData<typeof loader>();
   return (
     <>
-      <TableSchedules isPanel={true} token={token} />
+      <TableSchedules isPanel={true} token={token} user={user} />
     </>
   );
 }

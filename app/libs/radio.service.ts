@@ -6,9 +6,11 @@ import type {
 } from "./interface/News.interface";
 import type {
   SchedulesResponse,
-  Datum as ScheduleData,
+  StatsScheduleResponse,
 } from "./interface/Schedules.interface";
 import type { UsersResponse } from "./interface/Users.interface";
+import type { PanelLogsResponse } from "./interface/Logs.interface";
+import type { SchedulesWithUsersResponse } from "./interface/SchedulesWithUsers.interface";
 
 export interface RadiosBlum {
   history: string[];
@@ -75,15 +77,16 @@ interface SchedulesProps {
 export async function getSchedules({
   semana,
   anio,
-}: SchedulesProps): Promise<ScheduleData[]> {
+}: SchedulesProps): Promise<SchedulesResponse[]> {
   const res = await fetch(
     `${BASE_API_URL}/api/public/schedules?semana=${semana}&anio=${anio}`,
     {
       method: "GET",
+      cache: "no-store"
     },
   );
-  const data = (await res.json()) as SchedulesResponse;
-  return data.data;
+  const data = (await res.json()) as SchedulesResponse[];
+  return data;
 }
 export interface RegistrarDTO {
   dia: number;
@@ -95,7 +98,7 @@ export interface RegistrarDTO {
 export async function createSchedule(
   body: RegistrarDTO,
   token: string,
-): Promise<ScheduleData> {
+): Promise<SchedulesResponse> {
   const res = await fetch(`${BASE_API_URL}/api/schedules`, {
     method: "POST",
     headers: {
@@ -105,9 +108,23 @@ export async function createSchedule(
     },
     body: JSON.stringify(body),
   });
-  const data = (await res.json()) as ScheduleData;
+  const data = (await res.json()) as SchedulesResponse;
   return data;
 }
+
+export async function deleteSchedule(id: string, token: string) {
+  const res = await fetch(`${BASE_API_URL}/api/schedules/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  });
+  const data = (await res.json()) as SchedulesResponse;
+  return data;
+}
+
 export async function getUsers(
   token: string | null,
   param: Omit<NewsProps, "category">,
@@ -124,7 +141,45 @@ export async function getUsers(
       Accept: "application/json",
     },
   });
-  const data = (await res.json()) as UsersResponse;
+  const data = (await res.json());
+  return data;
+}
+
+export async function getStatsUsers(token: string | null) {
+  const res = await fetch(`${BASE_API_URL}/api/user/stats`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  });
+  const data = (await res.json());
+  return data;
+}
+
+interface ParamStatsSchedules {
+  semana: string;
+  user: string;
+  mes: string;
+  anio: string;
+}
+export async function getStatsSchedules(token: string|null, param: ParamStatsSchedules): Promise<StatsScheduleResponse> {
+  const params = new URLSearchParams({
+    semana: param.semana,
+    user: param.user,
+    mes: param.mes,
+    anio: param.anio
+  });
+  const res = await fetch(`${BASE_API_URL}/api/schedule/stats?${params}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  });
+  const data = (await res.json()) as StatsScheduleResponse;
   return data;
 }
 
@@ -139,3 +194,38 @@ export async function getTeam(): Promise<UsersResponse> {
   const data = (await res.json()) as UsersResponse;
   return data;
 }
+
+export async function getLogs(token: string): Promise<PanelLogsResponse[]> {
+  const res = await fetch(`${BASE_API_URL}/api/logs`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  });
+  const data = (await res.json()) as PanelLogsResponse[];
+  return data;
+}
+interface ParamSchedesWithUsers extends Omit<ParamStatsSchedules, 'user'> {
+  page: string
+}
+export async function getSchedulesWithUsers(token: string, param: ParamSchedesWithUsers): Promise<SchedulesWithUsersResponse> {
+  const params = new URLSearchParams({
+    page: param.page,
+    semana: param.semana,
+    mes: param.mes,
+    anio: param.anio,
+  });
+  const res = await fetch(`${BASE_API_URL}/api/user/schedules/list?${params}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  });
+  const data = (await res.json()) as SchedulesWithUsersResponse;
+  return data;
+}
+

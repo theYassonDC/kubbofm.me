@@ -9,11 +9,11 @@ export const authMiddleware: MiddlewareFunction = async ({
   context,
 }) => {
   const result = await getAuthenticatedUser(request);
-  const country =
-    context.get(netlifyRouterContext).geo?.country?.name ?? "unknown";
-  console.log(
-    `Handling ${request.method} request to ${request.url} from ${country}`,
-  );
+  // const country =
+  //   context.get(netlifyRouterContext).geo?.country?.name ?? "unknown";
+  // console.log(
+  //   `Handling ${request.method} request to ${request.url} from ${country}`,
+  // );
 
   if (!result) {
     throw redirect("/panel/login");

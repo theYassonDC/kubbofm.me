@@ -70,7 +70,7 @@ export default function Login() {
         onSubmit={handleSubmit}
         className="flex flex-col items-center gap-5 justify-center h-screen"
       >
-        <h1 className="text-2xl font-bold">HobbazFM Panel v1.0</h1>
+        <h1 className="text-2xl font-bold">YassonFM Panel v1.0</h1>
         <h2 className="text-sm text-neutral-700">Inicia sesion para ingresar al panel</h2>
         <input
           type="username"

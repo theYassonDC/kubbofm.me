@@ -12,11 +12,6 @@ export default function Navbar() {
     <header>
       <div className="relative">
         <img src="/assets/banner.png" alt="banner" />
-        <img
-          src="/assets/logo.png"
-          alt="logo"
-          className="absolute inset-0 m-auto object-cover md:h-30 h-15"
-        />
       </div>
       <nav className="px-8 py-4 bg-neutral-950 flex items-center">
         <ul className="flex flex-wrap gap-4 py-2 flex-1">

@@ -1,8 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
+import toast from "react-hot-toast";
+import { schedule_config } from "~/config/containts";
+import { useEliminarHorario } from "~/hooks/useEliminarHorario";
 import { useHorarios } from "~/hooks/useHorarios";
 import { useRegistrarHorario } from "~/hooks/useRegistrarHorario";
 import { useSemanaActual } from "~/hooks/useSemanaActual";
+import { useWebhook } from "~/hooks/useWebhook";
 import type {
   Franja,
   Horario,
@@ -10,42 +13,13 @@ import type {
   MapaHorarios,
   Pais,
 } from "~/libs/interface/horarios";
-import type { Datum as ScheduleData } from "~/libs/interface/Schedules.interface";
-import { mapHorarios } from "~/libs/mappers/horarios.mapper";
-import { getSchedules } from "~/libs/radio.service";
-
-const ZONA_RADIO = "America/Bogota"; // cámbiala si tu radio es de otro país
-
-const PAISES = [
-  { nombre: "Colombia / Perú", zona: "America/Bogota", bandera: "🇨🇴" },
-  { nombre: "Venezuela", zona: "America/Caracas", bandera: "🇻🇪" },
-  { nombre: "Ecuador", zona: "America/Guayaquil", bandera: "🇪🇨" },
-  {
-    nombre: "Argentina",
-    zona: "America/Argentina/Buenos_Aires",
-    bandera: "🇦🇷",
-  },
-  { nombre: "Chile", zona: "America/Santiago", bandera: "🇨🇱" },
-  { nombre: "Brasil", zona: "America/Sao_Paulo", bandera: "🇧🇷" },
-  { nombre: "México", zona: "America/Mexico_City", bandera: "🇲🇽" },
-  { nombre: "España", zona: "Europe/Madrid", bandera: "🇪🇸" },
-  { nombre: "EE.UU. (Este)", zona: "America/New_York", bandera: "🇺🇸" },
-];
-
-// ─── Configuración ─────────────────────────────────────────────────────────────
-const DAYS = [
-  "Lunes",
-  "Martes",
-  "Miércoles",
-  "Jueves",
-  "Viernes",
-  "Sábado",
-  "Domingo",
-];
 
 const detectarPais = (): Pais => {
   const zonaLocal = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  return PAISES.find((p) => p.zona === zonaLocal) ?? PAISES[0];
+  return (
+    schedule_config.PAISES.find((p) => p.zona === zonaLocal) ??
+    schedule_config.PAISES[0]
+  );
 };
 
 const getOffsetUTC = (zona: string): number => {
@@ -73,16 +47,6 @@ const generarFranjas = (offsetHoras: number = 0): Franja[] => {
   });
 };
 
-// Colores — van como inline style porque Tailwind purga las clases dinámicas
-const COLORES = {
-  pink: { bg: "#FBAED2", text: "#831843", border: "#F472B6" },
-  purple: { bg: "#C084FC", text: "#3B0764", border: "#A855F7" },
-  blue: { bg: "#93C5FD", text: "#1E3A8A", border: "#3B82F6" },
-  amber: { bg: "#FCD34D", text: "#78350F", border: "#F59E0B" },
-  teal: { bg: "#5EEAD4", text: "#134E4A", border: "#14B8A6" },
-  indigo: { bg: "#818CF8", text: "#1E1B4B", border: "#6366F1" },
-};
-
 const crearMapa = (horarios: Horario[]): MapaHorarios => {
   const mapa: MapaHorarios = {};
   horarios.forEach((h) => {
@@ -92,40 +56,84 @@ const crearMapa = (horarios: Horario[]): MapaHorarios => {
 };
 
 interface HorariosGridProps {
-  isPanel: boolean,
-  token?: string
+  isPanel: boolean;
+  token?: string;
+  user?: User;
 }
-
 // ─── Componente ────────────────────────────────────────────────────────────────
 export default function HorariosGrid(props: HorariosGridProps) {
   const { semana, anio } = useSemanaActual();
   const { data: horarios = [], isLoading } = useHorarios(semana, anio);
-  const { mutate: registrar, isPending } = useRegistrarHorario(semana, anio, props.token); // temporal
+  const { mutate: registrar, isPending: loadingHorario } = useRegistrarHorario(
+    semana,
+    anio,
+    props.token,
+  );
+  const { mutate: eliminar, isPending: loadDeleting } = useEliminarHorario(
+    semana,
+    anio,
+    props.token,
+  );
+  const { mutate: sendWebhook } = useWebhook()
 
   const [selected, setSelected] = useState<HorarioSeleccionado | null>(null);
+  const [celdaCargando, setCeldaCargando] = useState<string | null>(null);
   const [filtroDia, setFiltroDia] = useState<number | null>(null);
   const [paisSeleccionado, setPaisSeleccionado] = useState<Pais>(detectarPais);
   const offset = useMemo<number>(
-    () => calcularDiferencia(ZONA_RADIO, paisSeleccionado.zona),
+    () => calcularDiferencia(schedule_config.ZONA_RADIO, paisSeleccionado.zona),
     [paisSeleccionado],
   );
   const franjas = useMemo(() => generarFranjas(offset), [offset]);
+  const franjaSeleccionada = useMemo(
+    () =>
+      selected ? franjas.find((f) => f.horaRadio === selected.hora) : null,
+    [franjas, selected],
+  );
   const mapa = crearMapa(horarios);
 
-  const diasVisibles = filtroDia !== null ? [filtroDia] : DAYS.map((_, i) => i);
+  const diasVisibles =
+    filtroDia !== null ? [filtroDia] : schedule_config.DAYS.map((_, i) => i);
 
   const handlePais = (e: React.ChangeEvent<HTMLSelectElement>): void => {
-    const pais = PAISES.find((p) => p.zona === e.target.value);
+    const pais = schedule_config.PAISES.find((p) => p.zona === e.target.value);
     if (pais) setPaisSeleccionado(pais);
   };
-
+  const timestand = Math.floor(Date.now() / 1000)
   const handleCeldaVacia = (diaIdx: number, horaRadio: number) => {
-    registrar({
-      dia: diaIdx,
-      hora: horaRadio,
-      style: "pink",
-      semana,
-      anio,
+    setCeldaCargando(`${diaIdx}-${horaRadio}`);
+
+    registrar(
+      {
+        dia: diaIdx,
+        hora: horaRadio,
+        style: "pink",
+        semana,
+        anio,
+      },
+      {
+        onSettled: () => {
+          setCeldaCargando(null)
+          toast.success('Reserva tomada')
+          sendWebhook({
+            content: `## Nuevo reserva <@ &${schedule_config.discord.rolDjId}>\n> El usuario **${props.user?.username}** reservo una hora hoy <t:${timestand}:t> del dia ${schedule_config.DAYS[diaIdx]} en la tabla de horarios`,
+            type: 'schedules'
+          })
+        },
+      },
+    );
+  };
+
+  const handleDeleteSchedule = (id: string, dia: number) => {
+    eliminar(id, {
+      onSettled: () => {
+        setSelected(null)
+        toast.success('Reserva eliminada')
+        sendWebhook({
+          content: `## Reserva eliminada <@ &${schedule_config.discord.rolDjId}>\n> El usuario **${props.user?.username}** quito la reserva hoy <t:${timestand}:t> del dia ${schedule_config.DAYS[dia]} en la tabla de horarios`,
+          type: 'schedules'
+        })
+      },
     });
   };
 
@@ -138,7 +146,7 @@ export default function HorariosGrid(props: HorariosGridProps) {
           onChange={handlePais}
           className="text-sm border border-gray-200 rounded-lg px-2 py-1.5"
         >
-          {PAISES.map((p) => (
+          {schedule_config.PAISES.map((p) => (
             <option key={p.zona} value={p.zona} className="text-black">
               {p.bandera} {p.nombre}
             </option>
@@ -156,7 +164,7 @@ export default function HorariosGrid(props: HorariosGridProps) {
           >
             Todos
           </button>
-          {DAYS.map((day, i) => (
+          {schedule_config.DAYS.map((day, i) => (
             <button
               key={day}
               onClick={() => setFiltroDia(filtroDia === i ? null : i)}
@@ -173,8 +181,8 @@ export default function HorariosGrid(props: HorariosGridProps) {
       </div>
 
       {/* Tabla */}
-      <div className=" border border-gray-200 shadow-sm">
-        <table className="w-full border-collapse text-sm min-w-max">
+      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory scroll-smooth">
+        <table className="border-collapse border border-gray-600 text-sm w-full">
           {/* Cabecera */}
           <thead>
             <tr>
@@ -186,56 +194,84 @@ export default function HorariosGrid(props: HorariosGridProps) {
                   key={i}
                   className="bg-purple-800 text-white text-xs font-semibold px-3 py-3 text-center whitespace-nowrap border-r border-gray-700 min-w-32"
                 >
-                  {DAYS[i]}
+                  {schedule_config.DAYS[i]}
                 </th>
               ))}
             </tr>
           </thead>
 
           {/* Cuerpo */}
+
           <tbody>
-            {franjas.map(({ label, horaRadio }, rowIdx) => (
-              <tr
-                key={horaRadio}
-                className={rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50"}
-              >
-                {/* Columna hora */}
-                <td className="sticky left-0 z-0 text-xs text-gray-500 px-3 py-2 border-r border-b border-gray-200 whitespace-nowrap font-medium bg-inherit">
-                  {label}
+            {isLoading ? (
+              <tr className="bg-white text-black text-center">
+                <td colSpan={8} rowSpan={10}>
+                  <div className="text-center p-10">
+                    <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-purple-500 mx-auto"></div>
+                    <h2 className="text-zinc-900 dark:text-zinc-600 mt-4">
+                      Cargando tabla...
+                    </h2>
+                  </div>
                 </td>
-
-                {/* Celdas por día */}
-                {diasVisibles.map((diaIdx) => {
-                  const horario = mapa[`${diaIdx}-${horaRadio}`];
-                  const c = horario ? COLORES[horario.color] : null;
-
-                  return (
-                    <td
-                      key={diaIdx}
-                      className="px-2 py-1 border-r border-b border-gray-200 text-center"
-                    >
-                      {horario ? (
-                        <button
-                          onClick={() => setSelected({ ...horario, label })}
-                          className="w-full rounded px-2 py-1 text-xs font-semibold cursor-pointer border transition-opacity hover:opacity-80"
-                          style={{
-                            backgroundColor: c!.bg,
-                            color: c!.text,
-                            borderColor: c!.border,
-                          }}
-                        >
-                          {horario.djNombre}
-                        </button>
-                      ) : props.isPanel && (
-                        <button onClick={() => handleCeldaVacia(diaIdx, horaRadio)} className="cursor-pointer text-neutral-900 hover:text-neutral-700">
-                          Apuntarme
-                        </button>
-                      )}
-                    </td>
-                  );
-                })}
               </tr>
-            ))}
+            ) : (
+              franjas.map(({ label, horaRadio }, rowIdx) => (
+                <tr
+                  key={horaRadio}
+                  className={rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                >
+                  {/* Columna hora */}
+                  <td className="sticky left-0 z-0 text-xs text-gray-500 px-3 py-2 border-r border-b border-gray-200 whitespace-nowrap font-medium bg-inherit">
+                    {label}
+                  </td>
+
+                  {/* Celdas por día */}
+                  {diasVisibles.map((diaIdx) => {
+                    const horario = mapa[`${diaIdx}-${horaRadio}`];
+                    const c = horario
+                      ? schedule_config.COLORES[horario.color]
+                      : null;
+                    const key = `${diaIdx}-${horaRadio}`;
+                    const estaCargandoEstaCelda =
+                      loadingHorario && celdaCargando === key;
+                    return (
+                      <td
+                        key={diaIdx}
+                        className="px-2 py-1 border-r border-b border-gray-200 text-center"
+                      >
+                        {horario ? (
+                          <button
+                            onClick={() => setSelected({ ...horario, label })}
+                            className="w-full rounded px-2 py-1 text-xs font-semibold cursor-pointer border transition-opacity hover:opacity-80"
+                            style={{
+                              backgroundColor: c!.bg,
+                              color: c!.text,
+                              borderColor: c!.border,
+                            }}
+                          >
+                            {horario.djNombre}
+                          </button>
+                        ) : (
+                          props.isPanel && (
+                            <button
+                              onClick={() =>
+                                handleCeldaVacia(diaIdx, horaRadio)
+                              }
+                              disabled={loadingHorario}
+                              className="cursor-pointer text-neutral-700 hover:text-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {estaCargandoEstaCelda
+                                ? "Cargando.."
+                                : "Apuntarme"}
+                            </button>
+                          )
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -248,13 +284,15 @@ export default function HorariosGrid(props: HorariosGridProps) {
         >
           <div
             className="bg-white rounded-xl p-5 w-72 shadow-xl border-2"
-            style={{ borderColor: COLORES[selected.color].border }}
+            style={{
+              borderColor: schedule_config.COLORES[selected.color].border,
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-start mb-3">
               <div>
                 <p className="text-xs text-gray-400 uppercase tracking-wider">
-                  {DAYS[selected.dia]}
+                  {schedule_config.DAYS[selected.dia]}
                 </p>
                 <h2 className="text-lg font-bold text-gray-900 mt-0.5">
                   {selected.djNombre}
@@ -270,8 +308,11 @@ export default function HorariosGrid(props: HorariosGridProps) {
 
             <div className="space-y-2">
               {[
-                { label: "Día", value: DAYS[selected.dia] },
-                { label: "Hora", value: franjas[selected.hora].label },
+                { label: "Día", value: schedule_config.DAYS[selected.dia] },
+                {
+                  label: "Hora",
+                  value: franjaSeleccionada?.label ?? selected.label,
+                },
               ].map(({ label, value }) => (
                 <div
                   key={label}
@@ -292,6 +333,15 @@ export default function HorariosGrid(props: HorariosGridProps) {
               >
                 Cerrar
               </button>
+              {props.isPanel && selected.user_id === props.user?.id && (
+                <button
+                  onClick={() => handleDeleteSchedule(selected.id, selected.dia)}
+                  disabled={loadDeleting}
+                  className="px-4 py-2 text-sm text-red-500 border border-red-200 rounded-lg hover:bg-red-50"
+                >
+                  {loadDeleting ? "Eliminando.." : "Eliminar horario"}
+                </button>
+              )}
             </div>
           </div>
         </div>

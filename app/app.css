@@ -20,3 +20,6 @@ body {
     color-scheme: dark;
   }
 }
+
+.log-row { transition: background-color 120ms ease; }
+  .log-row:hover { background-color: #1C212B; }

@@ -29,11 +29,12 @@ const navList = [
     roles: ["admin", "head", "supervisor", "dj", "dj_auxiliar"],
   },
   { url: "/panel/users", name: "Usuarios", roles: ["admin", "supervisor"] },
-  // {
-  //   url: "/panel/news",
-  //   name: "Noticias",
-  //   roles: ["admin", "head", "supervisor"],
-  // },
+  { url: "/panel/schedules/users/list", name: "Horarios de usuarios", roles: ["admin", "supervisor"] },
+  {
+    url: "/panel/news",
+    name: "Noticias",
+    roles: ["admin", "head", "supervisor"],
+  },
   // {
   //   url: "/panel/events",
   //   name: "Eventos",
@@ -85,7 +86,7 @@ export default function PanelLayout() {
           {navList.map((v) => (
             <>
               {v.roles?.includes(user!.role) ? (
-                <NavLink to={v.url} discover="none">
+                <NavLink to={v.url} discover="render" key={v.name}>
                   {({ isActive, isPending, isTransitioning }) => (
                     <>
                       <p

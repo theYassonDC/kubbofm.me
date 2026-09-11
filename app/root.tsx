@@ -11,6 +11,7 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./libs/queyClient";
+import { Toaster } from "react-hot-toast";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -31,7 +32,7 @@ export function HydrateFallback() {
       <div className="w-20 h-20 border-4 border-transparent text-purple-700 text-4xl animate-spin flex items-center justify-center border-t-purple-400 rounded-full">
         <div className="w-16 h-16 border-4 border-transparent text-purple-400 text-2xl animate-spin flex items-center justify-center border-t-purple-700 rounded-full"></div>
       </div>
-      <p>Cargando web de HobbazFM</p>
+      <p>Cargando web de KubboFM</p>
     </div>
   );
 }
@@ -57,6 +58,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <Toaster />
     </QueryClientProvider>
   );
 }

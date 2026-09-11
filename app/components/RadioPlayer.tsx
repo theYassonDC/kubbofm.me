@@ -6,6 +6,7 @@ import { getRadioInfo } from "~/libs/radio.service";
 import { queryClient } from "~/libs/queyClient";
 import { useQuery } from "@tanstack/react-query";
 import { getKekoImg } from "~/libs/hobbazimager.";
+import { AUDIO_STREAM, defaultkekoimg } from "~/config/containts";
 
 const nowPlayingQuery = {
   queryKey: ["now-playing"],
@@ -16,8 +17,6 @@ const nowPlayingQuery = {
   },
   refetchInterval: 10_000, // revalida cada 10s — perfecto para radio
 };
-const defaultkekoimg =
-  "https://imager.hobbaz.es/?figure=hr-1000003301-49-31.lg-1000002983-110-62.hd-989999948-1021.he-3070-62.ch-1000002377-1193.sh-1000004229-110-62.fa-1000002759-100.&action=wave&gesture=std&headonly=0";
 export async function clientLoader() {
   await queryClient.ensureQueryData(nowPlayingQuery);
   return null;
@@ -25,7 +24,7 @@ export async function clientLoader() {
 
 export default function RadioPlayer() {
   const { isPlaying, isLoading, error, toggle, setVolume } = useAudioStream(
-    "https://radios.blumhost.es:8028/stream",
+    AUDIO_STREAM,
   );
   const { data, isLoading: isLoadingInfo, error: radioInfoError } = useQuery(nowPlayingQuery);
   const { data: kekoData } = useQuery({
@@ -47,7 +46,7 @@ export default function RadioPlayer() {
   return (
     <div className="md:flex gap-2 px-4 items-center justify-center">
       <div className="h-20 w-20 overflow-visible md:m-0 m-auto">
-        <img src={kekoData?.img_url ?? defaultkekoimg} alt="kekoimg" />
+        <img src={defaultkekoimg} alt="kekoimg" />
       </div>
       <button
         className="p-4 w-14 h-14 bg-purple-600 rounded-full cursor-pointer hover:bg-purple-700 active:bg-purple-600"

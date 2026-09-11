@@ -3,6 +3,8 @@
 export type ColorDJ = "pink" | "purple" | "blue" | "amber" | "teal" | "indigo"
 
 export interface Horario {
+  id: string
+  user_id: string
   djNombre: string
   dia:      number  // 0 = Lunes, 6 = Domingo
   hora:     number  // 0-23 en zona horaria de la radio
