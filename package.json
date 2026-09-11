@@ -2,6 +2,13 @@
   "name": "hobbazfm.com",
   "private": true,
   "type": "module",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.13.1",
+      "onFail": "download"
+    }
+  },
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
