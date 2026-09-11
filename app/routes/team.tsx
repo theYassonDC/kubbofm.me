@@ -29,7 +29,7 @@ export default function Team() {
   }
   return (
     <div className="flex flex-col items-center justify-center gap-10 mt-5">
-      <h1 className="md:text-4xl text-2xl text-center">¡Conoce al equipo de HobbazFM!</h1>
+      <h1 className="md:text-4xl text-2xl text-center">¡Conoce al equipo de KubboFM!</h1>
       <div className="flex flex-col items-center justify-center w-full gap-3">
         {data && data.data ? (
           data.data.map((v) => (
