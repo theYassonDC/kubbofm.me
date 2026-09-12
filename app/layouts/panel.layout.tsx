@@ -6,7 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "HobbazFM ~ Panel" },
+    { title: "KubboFM ~ Panel" },
     { name: "description", content: "Panel de gestion de djs" },
   ];
 }

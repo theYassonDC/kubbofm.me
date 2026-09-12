@@ -43,6 +43,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
+        <link rel="icon" href="/assets/KubboFM logo.jpg" />
         <Links />
       </head>
       <body>

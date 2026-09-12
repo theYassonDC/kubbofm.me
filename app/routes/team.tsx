@@ -49,6 +49,9 @@ export default function Team() {
           </>
         )}
       </div>
+      <br />
+      <br />
+      <br />
     </div>
   );
 }
