@@ -15,7 +15,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   const res = await auth({ username, password });
 
-  if (!res) {
+  if (!res.user) {
     return Response.json({ error: "Credenciales inválidas" }, { status: 401 });
   }
 
@@ -30,6 +30,7 @@ export async function action({ request }: Route.ActionArgs) {
 
 export default function Login() {
   const navigate = useNavigate();
+  const [error, setError] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const loginMutation = useMutation({
@@ -43,13 +44,13 @@ export default function Login() {
       const formData = new FormData();
       formData.set("password", password);
       formData.set("username", username);
-      const res = fetch("/panel/login", {
+      const res = await fetch("/panel/login", {
         method: "POST",
         body: formData,
       });
 
-      if (!res) {
-        throw new Error("Error al iniciar sesión");
+      if (!res.ok) {
+        throw new Error('Credenciales invalidas');
       }
 
       return res;
@@ -57,6 +58,9 @@ export default function Login() {
     onSuccess: () => {
       navigate("/panel/home");
     },
+    onError: (error) => {
+      setError(error.message)
+    }
   });
 
   function handleSubmit(e: React.ChangeEvent) {
@@ -72,6 +76,7 @@ export default function Login() {
       >
         <h1 className="text-2xl font-bold">YassonFM Panel v1.0</h1>
         <h2 className="text-sm text-neutral-700">Inicia sesion para ingresar al panel</h2>
+        <p className="text-sm text-red-600">{ error ? error : null }</p>
         <input
           type="username"
           name="username"

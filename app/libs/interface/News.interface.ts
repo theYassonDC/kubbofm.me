@@ -1,6 +1,6 @@
 export interface NewsResponse {
     current_page:   number;
-    data:           Datum[];
+    data:           NewsData[];
     first_page_url: string;
     from:           number;
     last_page:      number;
@@ -14,7 +14,7 @@ export interface NewsResponse {
     total:          number;
 }
 
-export interface Datum {
+export interface NewsData {
     id:          string;
     created_at:  Date;
     updated_at:  Date;

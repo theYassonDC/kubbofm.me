@@ -3,6 +3,7 @@ export const AUDIO_STREAM = import.meta.env.VITE_AUDIO_STREAM;
 export const BASE_API_URL = import.meta.env.VITE_BASE_API_URL;
 export const defaultkekoimg = import.meta.env.VITE_defaultkekoimg;
 export const MAINTENANCE = import.meta.env.VITE_MAINTENANCE;
+export const DEBUG = import.meta.env.VITE_DEBUG;
 export const WEBHOOKS = {
   SCHEDULES_LOGS: import.meta.env.VITE_WEBHOOK_SCHEDULES,
   REQUESTS_LOGS: import.meta.env.VITE_WEBHOOK_REQUESTS,

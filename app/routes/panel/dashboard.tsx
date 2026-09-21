@@ -3,6 +3,7 @@ import StatCard from "~/components/panel/StatCard";
 import { tokenContext } from "~/context";
 import {
   getNews,
+  getRadioInfo,
   getStatsSchedules,
   getStatsUsers,
   getUsers,
@@ -11,6 +12,16 @@ import type { Route } from "../+types/home";
 import { useLoaderData } from "react-router";
 import { useSemanaActual } from "~/hooks/useSemanaActual";
 import LogsSchedules from "~/components/schedules/LogsSchedules";
+
+const nowPlayingQuery = {
+  queryKey: ["now-playing"],
+  queryFn: async () => {
+    const result = await getRadioInfo();
+    if (!result) throw new Error("No data");
+    return result;
+  },
+  refetchInterval: 15_000, // revalida cada 10s — perfecto para radio
+};
 
 export async function loader({ context }: Route.LoaderArgs) {
   const token = context.get(tokenContext);
@@ -28,6 +39,11 @@ export default function Dashboard() {
         page: "1",
       }),
   });
+  const {
+    data: radioData,
+    isLoading: isLoadingRadioInfo,
+    error: radioInfoError,
+  } = useQuery(nowPlayingQuery);
   const { data: dataUsers, isLoading: isLoadingDataUsers } = useQuery({
     queryKey: ["users-data"],
     queryFn: () => getStatsUsers(token),
@@ -75,14 +91,15 @@ export default function Dashboard() {
               <span className="relative inline-flex size-3 rounded-full bg-red-500"></span>
             </span>
             <p className="font-bold">
-              User esta en transmision
+              {isLoadingRadioInfo ? "Load.." : radioData?.djusername}
             </p>
           </div>
           <p className="bg-purple-700 rounded-4xl items-center px-3 py-2 font-bold">
-            0 Oyentes
+            {isLoadingRadioInfo ? "Load.." : radioData?.listeners} Oyentes
           </p>
           <p className="bg-purple-700 rounded-4xl items-center px-3 py-2 font-bold">
-            0 pico de oyentes
+            {isLoadingRadioInfo ? "Load.." : radioData?.ulistener} pico de
+            oyentes
           </p>
         </div>
       </div>

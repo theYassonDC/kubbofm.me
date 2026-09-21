@@ -1,7 +1,7 @@
 import { BASE_API_URL, BASE_URL } from "~/config/containts";
 import type { CategoriesResponse } from "./interface/Categories.interface";
 import type {
-  Datum as NewResponse,
+  NewsData as NewResponse,
   NewsResponse,
 } from "./interface/News.interface";
 import type {
@@ -45,6 +45,27 @@ export async function getNews(param: NewsProps): Promise<NewsResponse> {
     method: "GET",
   });
   const data = (await res.json()) as NewsResponse;
+  return data;
+}
+export interface NewDto {
+  title: string;
+  content: string;
+  category_id: string;
+  image_url: string;
+}
+
+export async function createNew(token: string, body: NewDto): Promise<NewResponse> {
+  const res = await fetch(`${BASE_API_URL}/api/public/news`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(body),
+  })
+
+  const data = await res.json() as NewResponse
   return data;
 }
 

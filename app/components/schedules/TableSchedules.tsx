@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import toast from "react-hot-toast";
-import { schedule_config } from "~/config/containts";
+import { DEBUG, schedule_config } from "~/config/containts";
 import { useEliminarHorario } from "~/hooks/useEliminarHorario";
 import { useHorarios } from "~/hooks/useHorarios";
 import { useRegistrarHorario } from "~/hooks/useRegistrarHorario";
@@ -62,7 +62,8 @@ interface HorariosGridProps {
 }
 // ─── Componente ────────────────────────────────────────────────────────────────
 export default function HorariosGrid(props: HorariosGridProps) {
-  const { semana, anio } = useSemanaActual();
+  const [paisSeleccionado, setPaisSeleccionado] = useState<Pais>(detectarPais);
+  const { semana, anio } = useSemanaActual(paisSeleccionado.zona);
   const { data: horarios = [], isLoading } = useHorarios(semana, anio);
   const { mutate: registrar, isPending: loadingHorario } = useRegistrarHorario(
     semana,
@@ -74,12 +75,11 @@ export default function HorariosGrid(props: HorariosGridProps) {
     anio,
     props.token,
   );
-  const { mutate: sendWebhook } = useWebhook()
+  const { mutate: sendWebhook } = useWebhook();
 
   const [selected, setSelected] = useState<HorarioSeleccionado | null>(null);
   const [celdaCargando, setCeldaCargando] = useState<string | null>(null);
   const [filtroDia, setFiltroDia] = useState<number | null>(null);
-  const [paisSeleccionado, setPaisSeleccionado] = useState<Pais>(detectarPais);
   const offset = useMemo<number>(
     () => calcularDiferencia(schedule_config.ZONA_RADIO, paisSeleccionado.zona),
     [paisSeleccionado],
@@ -99,7 +99,7 @@ export default function HorariosGrid(props: HorariosGridProps) {
     const pais = schedule_config.PAISES.find((p) => p.zona === e.target.value);
     if (pais) setPaisSeleccionado(pais);
   };
-  const timestand = Math.floor(Date.now() / 1000)
+  const timestand = Math.floor(Date.now() / 1000);
   const handleCeldaVacia = (diaIdx: number, horaRadio: number) => {
     setCeldaCargando(`${diaIdx}-${horaRadio}`);
 
@@ -113,12 +113,16 @@ export default function HorariosGrid(props: HorariosGridProps) {
       },
       {
         onSettled: () => {
-          setCeldaCargando(null)
-          toast.success('Reserva tomada')
-          sendWebhook({
-            content: `## Nuevo reserva <@ &${schedule_config.discord.rolDjId}>\n> El usuario **${props.user?.username}** reservo una hora hoy <t:${timestand}:t> del dia ${schedule_config.DAYS[diaIdx]} en la tabla de horarios`,
-            type: 'schedules'
-          })
+          setCeldaCargando(null);
+          toast.success("Reserva tomada");
+          if (DEBUG) {
+            console.log("Reserva creada");
+          } else {
+            sendWebhook({
+              content: `## Nuevo reserva <@&${schedule_config.discord.rolDjId}>\n> El usuario **${props.user?.username}** reservo una hora hoy <t:${timestand}:t> del dia ${schedule_config.DAYS[diaIdx]} en la tabla de horarios`,
+              type: "schedules",
+            });
+          }
         },
       },
     );
@@ -127,12 +131,16 @@ export default function HorariosGrid(props: HorariosGridProps) {
   const handleDeleteSchedule = (id: string, dia: number) => {
     eliminar(id, {
       onSettled: () => {
-        setSelected(null)
-        toast.success('Reserva eliminada')
-        sendWebhook({
-          content: `## Reserva eliminada <@ &${schedule_config.discord.rolDjId}>\n> El usuario **${props.user?.username}** quito la reserva hoy <t:${timestand}:t> del dia ${schedule_config.DAYS[dia]} en la tabla de horarios`,
-          type: 'schedules'
-        })
+        setSelected(null);
+        toast.success("Reserva eliminada");
+        if (DEBUG) {
+          console.log("Reserva eliminada");
+        } else {
+          sendWebhook({
+            content: `## Reserva eliminada <@&${schedule_config.discord.rolDjId}>\n> El usuario **${props.user?.username}** quito la reserva hoy <t:${timestand}:t> del dia ${schedule_config.DAYS[dia]} en la tabla de horarios`,
+            type: "schedules",
+          });
+        }
       },
     });
   };
@@ -335,7 +343,9 @@ export default function HorariosGrid(props: HorariosGridProps) {
               </button>
               {props.isPanel && selected.user_id === props.user?.id && (
                 <button
-                  onClick={() => handleDeleteSchedule(selected.id, selected.dia)}
+                  onClick={() =>
+                    handleDeleteSchedule(selected.id, selected.dia)
+                  }
                   disabled={loadDeleting}
                   className="px-4 py-2 text-sm text-red-500 border border-red-200 rounded-lg hover:bg-red-50"
                 >
