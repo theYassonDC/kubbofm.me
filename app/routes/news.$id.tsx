@@ -3,6 +3,8 @@ import type { Route } from "./+types/news.$id";
 import { getNewById } from "~/libs/radio.service";
 import { useQuery } from "@tanstack/react-query";
 import { NavLink } from "react-router";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   await queryClient.ensureQueryData({
@@ -31,8 +33,8 @@ export default function NewPage({ params }: Route.ComponentProps) {
       </div>
       <article className="flex flex-col gap-3 pl-4">
         <h1 className="text-3xl font-bold">{data.title}</h1>
-        <pre>{data.content}</pre>
-        <NavLink to="/news">Volver a las noticias</NavLink>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.content}</ReactMarkdown>
+        <NavLink to="/news" className="px-4 py-2 text-fuchsia-100 hover:text-fuchsia-500">{'<'} Volver a las noticias</NavLink>
       </article>
     </div>
   );

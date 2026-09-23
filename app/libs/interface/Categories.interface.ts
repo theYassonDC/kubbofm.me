@@ -1,6 +1,6 @@
 export interface CategoriesResponse {
     current_page:   number;
-    data:           Datum[];
+    data:           Category[];
     first_page_url: string;
     from:           number;
     last_page:      number;
@@ -14,7 +14,7 @@ export interface CategoriesResponse {
     total:          number;
 }
 
-export interface Datum {
+export interface Category {
     id:          string;
     created_at:  Date;
     updated_at:  Date;

@@ -95,10 +95,10 @@ export default function Dashboard() {
             </p>
           </div>
           <p className="bg-purple-700 rounded-4xl items-center px-3 py-2 font-bold">
-            {isLoadingRadioInfo ? "Load.." : radioData?.listeners} Oyentes
+            {isLoadingRadioInfo ? "Load.." : radioData?.ulistener} Oyentes
           </p>
           <p className="bg-purple-700 rounded-4xl items-center px-3 py-2 font-bold">
-            {isLoadingRadioInfo ? "Load.." : radioData?.ulistener} pico de
+            {isLoadingRadioInfo ? "Load.." : radioData?.listeners} pico de
             oyentes
           </p>
         </div>

@@ -68,6 +68,16 @@ const navList: NavLinkItem[] = [
         name: "Categorías",
         roles: ["admin", "supervisor"],
       },
+      {
+        url: "/panel/news",
+        name: "Noticias",
+        roles: ["admin", "supervisor"],
+      },
+      {
+        url: "/panel/news/create",
+        name: "Crear noticia",
+        roles: ["admin", "supervisor"],
+      },
     ],
   },
 ];

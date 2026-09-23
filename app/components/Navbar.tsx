@@ -2,7 +2,7 @@ import { NavLink } from "react-router";
 
 const endpoints = [
   { href: "/", name: "Inicio" },
-  // { href: "/news", name: "Noticias" },
+  { href: "/news", name: "Noticias" },
   { href: "/schedules", name: "Horarios" },
   { href: "/team", name: "Equipo" },
 ];

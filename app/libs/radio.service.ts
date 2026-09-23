@@ -1,7 +1,8 @@
 import { BASE_API_URL, BASE_URL } from "~/config/containts";
-import type { CategoriesResponse } from "./interface/Categories.interface";
+import type { CategoriesResponse, Category } from "./interface/Categories.interface";
 import type {
   NewsData as NewResponse,
+  NewsData,
   NewsResponse,
 } from "./interface/News.interface";
 import type {
@@ -28,6 +29,9 @@ export async function getRadioInfo(): Promise<RadiosBlum> {
   return data;
 }
 
+/***
+ * --------------------------------- NOTICIAS ---------------------------------
+ */
 interface NewsProps {
   page: string;
   limit: string;
@@ -55,7 +59,7 @@ export interface NewDto {
 }
 
 export async function createNew(token: string, body: NewDto): Promise<NewResponse> {
-  const res = await fetch(`${BASE_API_URL}/api/public/news`, {
+  const res = await fetch(`${BASE_API_URL}/api/news`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -69,6 +73,34 @@ export async function createNew(token: string, body: NewDto): Promise<NewRespons
   return data;
 }
 
+export async function deleteNew(id: string, token: string): Promise<NewsData> {
+  const res = await fetch(`${BASE_API_URL}/api/news/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  });
+  const data = (await res.json()) as NewsData;
+  return data;
+}
+export async function updateNew(id: string, body: Partial<NewDto>, token: string): Promise<NewsData> {
+  const res = await fetch(`${BASE_API_URL}/api/news/${id}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const data = (await res.json()) as NewsData;
+  return data;
+}
+/***
+ * --------------------------------- CATEGORIAS ---------------------------------
+ */
 export async function getCategories(
   param: Omit<NewsProps, "category">,
 ): Promise<CategoriesResponse> {
@@ -83,6 +115,69 @@ export async function getCategories(
   const data = (await res.json()) as CategoriesResponse;
   return data;
 }
+export async function getCategory(token: string, id: string): Promise<Category> {
+  const res = await fetch(`${BASE_API_URL}/api/categories_news/${id}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  })
+
+  const data = await res.json() as Category
+
+  return data
+}
+
+export interface CategoryDto {
+  name: string,
+  description: string
+}
+export async function createCategory(body: CategoryDto, token: string): Promise<Category> {
+  const res = await fetch(`${BASE_API_URL}/api/categories_news`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(body),
+  })
+
+  const data = await res.json() as Category
+
+  return data
+}
+export async function updateCategory(id: string, body: Partial<CategoryDto>, token: string): Promise<Category> {
+  const res = await fetch(`${BASE_API_URL}/api/categories_news/${id}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(body),
+  })
+
+  const data = await res.json() as Category
+
+  return data
+}
+export async function deleteCategory(id: string, token: string): Promise<Response> {
+  const res = await fetch(`${BASE_API_URL}/api/categories_news/${id}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  })
+
+  const data = await res.json()
+
+  return data
+}
 
 export async function getNewById(id: string): Promise<NewResponse> {
   const res = await fetch(`${BASE_API_URL}/api/public/news/${id}`, {
@@ -91,6 +186,10 @@ export async function getNewById(id: string): Promise<NewResponse> {
   const data = (await res.json()) as NewResponse;
   return data;
 }
+
+/***
+ * --------------------------------- HORARIOS ---------------------------------
+ */
 interface SchedulesProps {
   semana: number;
   anio: number;
